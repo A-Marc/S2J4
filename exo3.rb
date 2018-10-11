@@ -2,26 +2,52 @@ require 'rubygems'
 require 'nokogiri'
 require 'open-uri'
 
-def get_the_email_of_a_deputy_from_its_webpage(x)
-page = Nokogiri::HTML(open(x))
-return puts page.xpath('//a[@class="email"]').map { |link| link['href'] }.to_s[9..-3]
-end
-#get_the_email_of_a_deputy_from_its_webpage("http://www2.assemblee-nationale.fr/deputes/fiche/OMC_PA724827")
-
-def get_all_the_urls_of_the_deputy()
-page = Nokogiri::HTML(open("http://www2.assemblee-nationale.fr/deputes/liste/alphabetique"))
-return  puts page.xpath('//a').map { |link| "http://www2.assemblee-nationale.fr/deputes" + link['href'] if /fiche/ =~ link['href']}.uniq[1..-1].strip
-end
-get_all_the_urls_of_the_deputy()
-
-def perform()
-list_of_emails = []
-my_array = get_all_the_urls_of_the_deputy()
-for i in my_array
-  puts get_the_email_of_a_deputy_from_its_webpage(i)
-end
-puts list_of_emails
-#my_hash = Hash[Nokogiri::HTML(open("http://annuaire-des-mairies.com/val-d-oise.html")).search('a').map{ |s| s.text.strip }[8..-2].zip list_of_emails]
+def get_the_email_of_a_deputy()
+page = Nokogiri::HTML(open("https://www.voxpublic.org/spip.php?page=annuaire&cat=deputes&pagnum=600&lang=fr"))
+return tableau = page.xpath('//a[@class="ann_mail"]').map { |link| link['href']}.map{|x| x[7..-1] if /@/ =~ x && /nationale/ =~ x && /secretariat/ !~ x }.uniq[2..-1].insert(0, "damien.abad@assemblee-nationale.fr")
 end
 
-perform()
+#get_the_email_of_a_deputy()
+
+def get_name_and_first_name()
+page = Nokogiri::HTML(open("https://www.voxpublic.org/spip.php?page=annuaire&cat=deputes&pagnum=600&lang=fr"))
+return page.search('h2').map{ |s| s.text.strip }[0..-9]
+end
+#get_name_or_first_name()
+
+def split_name_and_first_name_and_create_hash()
+first_name = []
+name = []
+    for i in get_name_and_first_name()
+      integral_name = i.split(" ")
+      if integral_name.count == 3
+        first_name.push(integral_name[1])
+        name.push(integral_name[2])
+      end
+
+    if integral_name.count == 4
+        first_name.push(integral_name[1])
+        name.push(integral_name[2..3].join(" "))
+    end
+
+    if integral_name.count == 5
+      first_name.push(integral_name[1])
+      name.push(integral_name[2..4].join(" "))
+end
+end
+
+my_final_array = []
+tab5 = get_the_email_of_a_deputy()
+tab6 = first_name.zip name
+
+
+for j in 0..575
+  my_hash = Hash.new
+  my_hash[tab5[j]] = tab6[j]
+  my_final_array.push(my_hash)
+end
+return puts my_final_array
+end
+
+
+split_name_and_first_name_and_create_hash()
